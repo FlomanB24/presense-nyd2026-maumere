@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Dashboard Kehadiran (Live)</title>
+    <style>
+      body {
+        font-family: Arial, system-ui, sans-serif;
+        max-width: 1100px;
+        margin: auto;
+        padding: 14px;
+      }
+      .row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      .card {
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 12px;
+        margin-top: 10px;
+      }
+      .pill {
+        border: 1px solid #e5e7eb;
+        border-radius: 999px;
+        padding: 6px 10px;
+        font-size: 14px;
+      }
+      select {
+        padding: 8px 10px;
+        border-radius: 10px;
+        border: 1px solid #d0d7de;
+        font-size: 14px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 8px;
+      }
+      th,
+      td {
+        border-bottom: 1px solid #eee;
+        padding: 8px;
+        text-align: left;
+        white-space: nowrap;
+      }
+      th {
+        background: #fafafa;
+        position: sticky;
+        top: 0;
+      }
+      .muted {
+        color: #64748b;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      @media (min-width: 900px) {
+        .grid {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      .num {
+        text-align: right;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="row">
+      <h2 style="margin: 0">Dashboard Kehadiran (Live)</h2>
+      <span class="pill" id="date">-</span>
+
+      <span class="pill">Total: <b id="total">0</b></span>
+
+      <select id="offset" class="pill" title="Pilih tanggal">
+        <option value="0">Hari ini</option>
+        <option value="1">Kemarin</option>
+        <option value="2">2 hari lalu</option>
+        <option value="3">3 hari lalu</option>
+        <option value="4">4 hari lalu</option>
+        <option value="5">5 hari lalu</option>
+      </select>
+
+      <span class="pill muted" id="lastUpdate">Update: -</span>
+    </div>
+
+    <div class="card">
+      <div><b>Rekap per HariKe</b></div>
+      <div id="byHari" class="muted" style="margin-top: 6px">-</div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="row" style="margin: 0">
+          <b>Per Keuskupan (Total / L / P)</b>
+          <span class="pill muted" id="countKeus" style="margin-left: auto"
+            >0 item</span
+          >
+        </div>
+        <div style="overflow: auto; max-height: 420px; margin-top: 8px">
+          <table>
+            <thead>
+              <tr>
+                <th>Keuskupan</th>
+                <th class="num">Total</th>
+                <th class="num">L</th>
+                <th class="num">P</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyKeus"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="row" style="margin: 0">
+          <b>Per Paroki (Total / L / P)</b>
+          <span style="margin-left: auto" class="muted">Filter Keuskupan:</span>
+          <select id="filterKeus" title="Filter paroki berdasarkan keuskupan">
+            <option value="">(Semua)</option>
+          </select>
+          <span class="pill muted" id="countParoki">0 item</span>
+        </div>
+        <div style="overflow: auto; max-height: 420px; margin-top: 8px">
+          <table>
+            <thead>
+              <tr>
+                <th>Paroki</th>
+                <th class="num">Total</th>
+                <th class="num">L</th>
+                <th class="num">P</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyParoki"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ====== WAJIB: isi URL Web App Apps Script Anda ======
+      const API =
+        "https://script.google.com/macros/s/AKfycbx1cTP5e0OY7JEUo_KnrM5KxpHYFKjRUWcD7jtie0GZerpXEcux-W9N-Bd87uZwXLfTJA/exec";
+      // ===============================================
+
+      const dateEl = document.getElementById("date");
+      const totalEl = document.getElementById("total");
+      const byHariEl = document.getElementById("byHari");
+      const lastUpdateEl = document.getElementById("lastUpdate");
+
+      const offsetEl = document.getElementById("offset");
+
+      const tbodyKeus = document.getElementById("tbodyKeus");
+      const tbodyParoki = document.getElementById("tbodyParoki");
+
+      const filterKeusEl = document.getElementById("filterKeus");
+      const countKeusEl = document.getElementById("countKeus");
+      const countParokiEl = document.getElementById("countParoki");
+
+      let latestData = null;
+
+      function escapeHtml(s) {
+        return String(s || "").replace(
+          /[&<>"']/g,
+          (m) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[m],
+        );
+      }
+
+      function sortKeysByTotal(obj) {
+        const keys = Object.keys(obj || {});
+        keys.sort((a, b) => (obj[b]?.total || 0) - (obj[a]?.total || 0));
+        return keys;
+      }
+
+      function renderByHari(byHari) {
+        const bh = byHari || {};
+        const keys = Object.keys(bh).sort();
+        if (!keys.length) {
+          byHariEl.innerHTML = "-";
+          return;
+        }
+        byHariEl.innerHTML = keys
+          .map((k) => `${escapeHtml(k)}: <b>${bh[k]}</b>`)
+          .join(" &nbsp; | &nbsp; ");
+      }
+
+      function renderKeuskupan(byKeuskupan) {
+        const bk = byKeuskupan || {};
+        const keys = sortKeysByTotal(bk);
+
+        countKeusEl.textContent = keys.length + " item";
+
+        tbodyKeus.innerHTML = keys
+          .map((k) => {
+            const o = bk[k] || {};
+            return `<tr>
+        <td>${escapeHtml(k)}</td>
+        <td class="num">${o.total || 0}</td>
+        <td class="num">${o.L || 0}</td>
+        <td class="num">${o.P || 0}</td>
+      </tr>`;
+          })
+          .join("");
+
+        // isi dropdown filter keuskupan
+        const current = filterKeusEl.value || "";
+        const opts = ['<option value="">(Semua)</option>']
+          .concat(
+            keys.map(
+              (k) =>
+                `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`,
+            ),
+          )
+          .join("");
+        filterKeusEl.innerHTML = opts;
+        filterKeusEl.value = keys.includes(current) ? current : "";
+      }
+
+      // Gabungkan semua paroki dari semua keuskupan (untuk mode "(Semua)")
+      function mergeAllParoki(byParokiByKeuskupan) {
+        const out = {};
+        const map = byParokiByKeuskupan || {};
+        for (const keus of Object.keys(map)) {
+          const parMap = map[keus] || {};
+          for (const par of Object.keys(parMap)) {
+            const v = parMap[par] || { L: 0, P: 0, total: 0 };
+            if (!out[par]) out[par] = { L: 0, P: 0, total: 0 };
+            out[par].L += v.L || 0;
+            out[par].P += v.P || 0;
+            out[par].total += v.total || 0;
+          }
+        }
+        return out;
+      }
+
+      function renderParokiFromData() {
+        const selectedKeus = filterKeusEl.value || "";
+        const byPBK = latestData?.byParokiByKeuskupan || {};
+
+        let parokiObj = {};
+        if (!selectedKeus) {
+          parokiObj = mergeAllParoki(byPBK);
+        } else {
+          parokiObj = byPBK[selectedKeus] || {};
+        }
+
+        const keys = sortKeysByTotal(parokiObj);
+        countParokiEl.textContent = keys.length + " item";
+
+        tbodyParoki.innerHTML = keys
+          .map((k) => {
+            const o = parokiObj[k] || {};
+            return `<tr>
+        <td>${escapeHtml(k)}</td>
+        <td class="num">${o.total || 0}</td>
+        <td class="num">${o.L || 0}</td>
+        <td class="num">${o.P || 0}</td>
+      </tr>`;
+          })
+          .join("");
+      }
+
+      async function refresh() {
+        const offset = offsetEl.value || "0";
+
+        const url = new URL(API);
+        url.searchParams.set("page", "stats");
+        url.searchParams.set("offset", offset);
+
+        const res = await fetch(url.toString(), { cache: "no-store" });
+        const data = await res.json();
+        latestData = data;
+
+        dateEl.textContent = data.date || "-";
+        totalEl.textContent = data.total || 0;
+        lastUpdateEl.textContent = "Update: " + new Date().toLocaleTimeString();
+
+        renderByHari(data.byHari);
+        renderKeuskupan(data.byKeuskupan);
+        renderParokiFromData();
+      }
+
+      offsetEl.onchange = refresh;
+      filterKeusEl.onchange = renderParokiFromData;
+
+      refresh();
+      setInterval(refresh, 5000);
+    </script>
+  </body>
+</html>

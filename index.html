@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <title>Scanner Kehadiran (Event)</title>
+
+    <style>
+      :root {
+        --gap: 10px;
+        --radius: 14px;
+        --border: #e5e7eb;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: Arial, system-ui, sans-serif;
+        max-width: 980px;
+        margin: auto;
+        padding: 14px;
+        background: #fff;
+      }
+      .row {
+        display: flex;
+        gap: var(--gap);
+        flex-wrap: wrap;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      h2 {
+        margin: 0;
+      }
+      input,
+      select,
+      button {
+        padding: 12px 14px;
+        font-size: 18px;
+        min-height: 54px;
+        border-radius: var(--radius);
+        border: 1px solid #d0d7de;
+      }
+      input,
+      select {
+        width: 100%;
+      }
+      button {
+        font-weight: 800;
+        background: #f8fafc;
+        cursor: pointer;
+        border: 1px solid #cbd5e1;
+      }
+      button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+      #start {
+        background: #0ea5e9;
+        color: #fff;
+      }
+      #stop {
+        background: #ef4444;
+        color: #fff;
+      }
+      #sync {
+        background: #16a34a;
+        color: #fff;
+      }
+
+      .pill {
+        margin-left: auto;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: 6px 10px;
+        font-size: 14px;
+      }
+      .card {
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 12px;
+        margin-top: 10px;
+      }
+      .ok {
+        color: #0f766e;
+        font-weight: 900;
+      }
+      .warn {
+        color: #b45309;
+        font-weight: 900;
+      }
+      .bad {
+        color: #b91c1c;
+        font-weight: 900;
+      }
+
+      /* Default laptop: landscape */
+      video {
+        width: 100%;
+        background: #000;
+        border-radius: var(--radius);
+        border: 1px solid #ddd;
+        aspect-ratio: 16/9;
+        object-fit: cover;
+      }
+      /* HP: portrait agar QR besar */
+      @media (max-width: 700px) {
+        video {
+          aspect-ratio: 4/5;
+        }
+      }
+
+      @media (max-width: 520px) {
+        .row > * {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="row">
+      <h2>Scanner Kehadiran (Event)</h2>
+      <span class="pill" id="net">Online</span>
+      <span class="pill" id="pending">Pending: 0</span>
+    </div>
+
+    <div class="row">
+      <select id="hari">
+        <option value="">Pilih Hari</option>
+        <option>Hari-1</option>
+        <option>Hari-2</option>
+        <option>Hari-3</option>
+        <option>Hari-4</option>
+        <option>Hari-5</option>
+      </select>
+      <input id="petugas" placeholder="Nama Petugas" />
+      <input id="k" type="password" placeholder="Kunci Petugas" />
+      <button id="start">Mulai Scan</button>
+      <button id="stop" disabled>Stop</button>
+      <button id="sync">Sync Sekarang</button>
+    </div>
+
+    <video id="video" playsinline></video>
+
+    <div class="card">
+      <div><b>Status:</b> <span id="status"></span></div>
+      <div><b>Token:</b> <span id="last">-</span></div>
+    </div>
+
+    <script type="module">
+      import QrScanner from "https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.min.js";
+      QrScanner.WORKER_PATH =
+        "https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner-worker.min.js";
+
+      // =======================
+      // WAJIB: isi URL Web App Apps Script Anda (yang /exec)
+      // contoh: https://script.google.com/macros/s/AKfycb.../exec
+      const API =
+        "https://script.google.com/macros/s/AKfycbx1cTP5e0OY7JEUo_KnrM5KxpHYFKjRUWcD7jtie0GZerpXEcux-W9N-Bd87uZwXLfTJA/exec";
+      // =======================
+
+      const video = document.getElementById("video");
+      const hariEl = document.getElementById("hari");
+      const petugasEl = document.getElementById("petugas");
+      const keyEl = document.getElementById("k");
+
+      const statusEl = document.getElementById("status");
+      const lastEl = document.getElementById("last");
+      const netEl = document.getElementById("net");
+      const pendingEl = document.getElementById("pending");
+
+      const btnStart = document.getElementById("start");
+      const btnStop = document.getElementById("stop");
+      const btnSync = document.getElementById("sync");
+
+      let scanner = null;
+      let lastSeen = "";
+      let lastSeenAt = 0;
+
+      // ====== Feedback cepat (beep + getar) ======
+      function beep(freq = 880, ms = 80) {
+        try {
+          const Ctx = window.AudioContext || window.webkitAudioContext;
+          const ctx = new Ctx();
+          const o = ctx.createOscillator();
+          const g = ctx.createGain();
+          o.type = "square";
+          o.frequency.value = freq;
+          o.connect(g);
+          g.connect(ctx.destination);
+          g.gain.value = 0.04;
+          o.start();
+          setTimeout(() => {
+            o.stop();
+            ctx.close();
+          }, ms);
+        } catch {}
+      }
+      function vibrate(ms = 40) {
+        try {
+          navigator.vibrate?.(ms);
+        } catch {}
+      }
+
+      function setStatus(msg, cls = "") {
+        statusEl.className = cls;
+        statusEl.textContent = msg;
+      }
+
+      function extractToken(text) {
+        const t = String(text || "");
+        const m = t.match(/TOKEN\s*=\s*([A-Za-z0-9-_]+)/i);
+        return (m ? m[1] : t).trim();
+      }
+
+      function canScan(token) {
+        const now = Date.now();
+        if (token === lastSeen && now - lastSeenAt < 1200) return false;
+        lastSeen = token;
+        lastSeenAt = now;
+        return true;
+      }
+
+      // ====== Offline Queue (LocalStorage) ======
+      const QKEY = "ABSEN_QUEUE_V1";
+      function loadQueue() {
+        try {
+          return JSON.parse(localStorage.getItem(QKEY) || "[]");
+        } catch {
+          return [];
+        }
+      }
+      function saveQueue(q) {
+        localStorage.setItem(QKEY, JSON.stringify(q));
+        pendingEl.textContent = "Pending: " + q.length;
+      }
+      function enqueue(item) {
+        const q = loadQueue();
+        q.push(item);
+        saveQueue(q);
+      }
+
+      function setNetBadge() {
+        const on = navigator.onLine;
+        netEl.textContent = on ? "Online" : "Offline";
+      }
+      window.addEventListener("online", () => {
+        setNetBadge();
+        syncQueue();
+      });
+      window.addEventListener("offline", setNetBadge);
+
+      async function postJson(url, obj) {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(obj),
+          cache: "no-store",
+        });
+        return res.json();
+      }
+
+      async function sendOne(token) {
+        if (!hariEl.value) return setStatus("Pilih Hari dulu", "bad");
+        if (!petugasEl.value) return setStatus("Nama petugas kosong", "bad");
+        if (!keyEl.value) return setStatus("Kunci petugas kosong", "bad");
+        if (!token) return setStatus("Token kosong", "bad");
+
+        lastEl.textContent = token;
+
+        // Offline -> antre
+        if (!navigator.onLine) {
+          enqueue({ token, hari: hariEl.value });
+          beep(660, 70);
+          vibrate(35);
+          return setStatus("📴 Offline. Disimpan ke antrean.", "warn");
+        }
+
+        setStatus("Mengirim...");
+        try {
+          const data = await postJson(API, {
+            token,
+            hari: hariEl.value,
+            petugas: petugasEl.value,
+            k: keyEl.value,
+          });
+
+          const msg = data.message || "";
+          // sukses -> beep lebih tinggi
+          if (msg.startsWith("✅")) {
+            beep(880, 80);
+            beep(1320, 70);
+          } else {
+            beep(520, 90);
+          }
+          vibrate(40);
+
+          setStatus(msg, msg.startsWith("✅") ? "ok" : "warn");
+        } catch (e) {
+          // gagal jaringan -> antre
+          enqueue({ token, hari: hariEl.value });
+          beep(520, 90);
+          vibrate(35);
+          setStatus("⚠️ Gagal kirim. Disimpan ke antrean.", "warn");
+        }
+      }
+
+      async function syncQueue() {
+        if (!navigator.onLine) return setStatus("Masih offline.", "warn");
+
+        const q = loadQueue();
+        if (!q.length) return setStatus("Antrean kosong.", "ok");
+
+        if (!keyEl.value)
+          return setStatus("Isi kunci petugas dulu untuk sync.", "bad");
+
+        setStatus("Sync antrean...");
+        try {
+          const data = await postJson(API, {
+            page: "bulk",
+            items: q,
+            petugas: petugasEl.value || "Petugas",
+            k: keyEl.value || "",
+          });
+
+          if (data && data.ok === false) {
+            return setStatus(data.message || "⛔ Sync ditolak", "bad");
+          }
+
+          saveQueue([]);
+          beep(880, 80);
+          beep(1320, 70);
+          vibrate(60);
+          setStatus(
+            `✅ Sync: ${data.inserted || 0} masuk, ${data.duplicates || 0} duplikat, ${data.failed || 0} gagal`,
+            "ok",
+          );
+        } catch (e) {
+          setStatus("⚠️ Sync gagal. Coba lagi.", "warn");
+        }
+      }
+
+      async function startScan() {
+        try {
+          scanner = new QrScanner(
+            video,
+            (result) => {
+              const token = extractToken(result?.data || result);
+              if (!token) return;
+              if (!canScan(token)) return;
+              sendOne(token);
+            },
+            {
+              preferredCamera: "environment",
+              highlightScanRegion: true,
+              maxScansPerSecond: 25,
+              // fokus crop tengah -> biasanya lebih cepat & QR tampak "besar" untuk deteksi
+              calculateScanRegion: (videoEl) => {
+                const w = videoEl.videoWidth;
+                const h = videoEl.videoHeight;
+                const size = Math.floor(Math.min(w, h) * 0.72);
+                return {
+                  x: Math.floor((w - size) / 2),
+                  y: Math.floor((h - size) / 2),
+                  width: size,
+                  height: size,
+                };
+              },
+            },
+          );
+
+          await scanner.start();
+
+          btnStart.disabled = true;
+          btnStop.disabled = false;
+          hariEl.disabled = true;
+
+          setStatus("Kamera aktif. Scan siap.", "ok");
+        } catch (e) {
+          setStatus(
+            "❌ Kamera tidak bisa dibuka. Pastikan izin kamera Allow.",
+            "bad",
+          );
+        }
+      }
+
+      async function stopScan() {
+        try {
+          await scanner?.stop();
+        } catch {}
+        scanner = null;
+        btnStart.disabled = false;
+        btnStop.disabled = true;
+        hariEl.disabled = false;
+        setStatus("Scan dihentikan.", "warn");
+      }
+
+      btnStart.onclick = startScan;
+      btnStop.onclick = stopScan;
+      btnSync.onclick = syncQueue;
+
+      // init
+      setNetBadge();
+      saveQueue(loadQueue());
+      setStatus("Siap. Isi Hari, Petugas, Kunci. Lalu Mulai Scan.");
+    </script>
+  </body>
+</html>
