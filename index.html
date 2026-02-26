@@ -5,6 +5,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
+    <title>Scanner Kehadiran (Petugas)</title>
     <style>
       :root {
         --gap: 12px;
@@ -13,14 +14,11 @@
         --font: 18px;
         --pad-x: 14px;
         --border: #e5e7eb;
-        --muted: #64748b;
         --focus: rgba(9, 105, 218, 0.18);
       }
-
       * {
         box-sizing: border-box;
       }
-
       body {
         font-family: Arial, system-ui, sans-serif;
         padding: 14px;
@@ -28,7 +26,6 @@
         margin: auto;
         background: #fff;
       }
-
       .row {
         display: flex;
         gap: var(--gap);
@@ -36,11 +33,9 @@
         align-items: center;
         margin-bottom: 12px;
       }
-
       h2 {
         margin: 0;
       }
-
       input,
       select,
       button {
@@ -49,32 +44,27 @@
         min-height: var(--control-h);
         border-radius: var(--radius);
       }
-
       input,
       select {
         width: 100%;
         border: 1px solid #d0d7de;
       }
-
       input:focus,
       select:focus {
         border-color: #0969da;
         box-shadow: 0 0 0 4px var(--focus);
         outline: none;
       }
-
       button {
         font-weight: 700;
         border: 1px solid #cbd5e1;
         background: #f8fafc;
         cursor: pointer;
       }
-
       button:disabled {
         opacity: 0.55;
         cursor: not-allowed;
       }
-
       #start {
         background: #0ea5e9;
         color: #fff;
@@ -91,18 +81,17 @@
         background: #64748b;
         color: #fff;
       }
-
       .pill {
         padding: 8px 12px;
         border-radius: 999px;
         border: 1px solid var(--border);
         font-size: 14px;
       }
-
       .pill.right {
         margin-left: auto;
       }
 
+      /* Kamera area */
       video {
         width: 100%;
         border-radius: 14px;
@@ -112,12 +101,19 @@
         object-fit: cover;
         aspect-ratio: 16/9;
       }
-
-      /* Portrait untuk HP: QR tampak besar */
       @media (max-width: 700px) {
         video {
           aspect-ratio: 4/5;
         }
+      }
+      /* html5-qrcode container */
+      #reader {
+        width: 100%;
+        border-radius: 14px;
+        border: 1px solid #ddd;
+        margin-top: 10px;
+        overflow: hidden;
+        background: #000;
       }
 
       .card {
@@ -126,7 +122,6 @@
         padding: 14px;
         margin-top: 12px;
       }
-
       .ok {
         color: #0f766e;
         font-weight: 800;
@@ -139,7 +134,6 @@
         color: #b91c1c;
         font-weight: 800;
       }
-
       .hidden {
         display: none;
       }
@@ -148,11 +142,9 @@
         position: relative;
         width: 100%;
       }
-
       .field-pass input {
         padding-right: 52px;
       }
-
       .eye-btn {
         position: absolute;
         right: 10px;
@@ -170,18 +162,15 @@
         justify-content: center;
         cursor: pointer;
       }
-
       .eye-btn:focus {
         outline: none;
         box-shadow: 0 0 0 4px var(--focus);
       }
-
       .eye-ic {
         width: 22px;
         height: 22px;
         fill: #334155;
       }
-
       pre {
         white-space: pre-wrap;
         margin: 8px 0 0;
@@ -189,7 +178,6 @@
         font-size: 13px;
         line-height: 1.25rem;
       }
-
       @media (max-width: 520px) {
         .row > * {
           width: 100%;
@@ -201,10 +189,10 @@
   <body>
     <div class="row">
       <h2>Scanner Kehadiran (Petugas)</h2>
-
       <span class="pill right" id="cap">Kamera: -</span>
       <span class="pill" id="net">Online</span>
       <span class="pill" id="pend">Pending: 0</span>
+      <span class="pill" id="modePill">Mode: -</span>
     </div>
 
     <div class="row">
@@ -228,31 +216,18 @@
           type="password"
           placeholder="Kunci Petugas (tidak disimpan)"
         />
-
         <button
           type="button"
           id="toggleEye"
           class="eye-btn"
           aria-label="Tampilkan/Sembunyikan kunci"
-          title="Tampilkan/Sembunyikan"
         >
-          <svg
-            id="eyeOpen"
-            class="eye-ic hidden"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
+          <svg id="eyeOpen" class="eye-ic hidden" viewBox="0 0 24 24">
             <path
               d="M12 5c-7 0-10 7-10 7s3 7 10 7 10-7 10-7-3-7-10-7zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-2.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"
             />
           </svg>
-
-          <svg
-            id="eyeOff"
-            class="eye-ic"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
+          <svg id="eyeOff" class="eye-ic" viewBox="0 0 24 24">
             <path
               d="M2.3 3.7 3.7 2.3l18 18-1.4 1.4-2.2-2.2A10.9 10.9 0 0 1 12 21C5 21 2 14 2 14a20.2 20.2 0 0 1 4.3-6.1L2.3 3.7zM12 7c7 0 10 7 10 7a19.8 19.8 0 0 1-2.7 4l-3-3a5 5 0 0 0-6.3-6.3l-1.8-1.8A10.7 10.7 0 0 1 12 7z"
             />
@@ -266,7 +241,9 @@
       <button id="resetQ">Reset Antrean</button>
     </div>
 
-    <video id="video" playsinline></video>
+    <!-- Dua renderer: video (BarcodeDetector) atau reader div (html5-qrcode) -->
+    <video id="video" playsinline class="hidden"></video>
+    <div id="reader" class="hidden"></div>
 
     <div class="card">
       <div><b>Status:</b> <span id="status"></span></div>
@@ -276,7 +253,6 @@
         <div><b>DEBUG:</b></div>
         <pre id="debug"></pre>
       </div>
-
       <button id="toggleDebug" style="margin-top: 10px">Tampilkan Debug</button>
     </div>
 
@@ -288,11 +264,13 @@
       // =======================
 
       const video = document.getElementById("video");
+      const reader = document.getElementById("reader");
       const statusEl = document.getElementById("status");
       const lastTokenEl = document.getElementById("lastToken");
       const capEl = document.getElementById("cap");
       const netEl = document.getElementById("net");
       const pendEl = document.getElementById("pend");
+      const modePill = document.getElementById("modePill");
 
       const hariEl = document.getElementById("hari");
       const petugasEl = document.getElementById("petugas");
@@ -332,13 +310,11 @@
         statusEl.className = cls;
         statusEl.textContent = msg;
       }
-
       function setDebug(obj) {
         if (!showDebug) return;
         debugEl.textContent =
           typeof obj === "string" ? obj : JSON.stringify(obj, null, 2);
       }
-
       function extractToken(t) {
         const m = String(t).match(/TOKEN\s*=\s*([A-Za-z0-9-_]+)/i);
         return (m ? m[1] : t).trim();
@@ -346,7 +322,6 @@
 
       // ===== Offline Queue =====
       const QKEY = "ABSEN_QUEUE_V2";
-
       function loadQueue() {
         try {
           return JSON.parse(localStorage.getItem(QKEY) || "[]");
@@ -374,7 +349,7 @@
       });
       window.addEventListener("offline", updateNet);
 
-      // ===== HTTP helpers (POST form, fallback GET) =====
+      // ===== HTTP =====
       async function postForm(obj) {
         const body = new URLSearchParams(obj);
         const res = await fetch(API, {
@@ -409,56 +384,42 @@
         return { ok: res.ok, status: res.status, text, json };
       }
 
-      function beep(freq = 880, ms = 70) {
-        try {
-          const Ctx = window.AudioContext || window.webkitAudioContext;
-          const ctx = new Ctx();
-          const o = ctx.createOscillator();
-          const g = ctx.createGain();
-          o.type = "square";
-          o.frequency.value = freq;
-          o.connect(g);
-          g.connect(ctx.destination);
-          g.gain.value = 0.04;
-          o.start();
-          setTimeout(() => {
-            o.stop();
-            ctx.close();
-          }, ms);
-        } catch {}
-      }
-      function vibrate(ms = 40) {
-        try {
-          navigator.vibrate?.(ms);
-        } catch {}
-      }
-
       function validateForm() {
-        if (!hariEl.value)
-          return setStatus("Pilih Hari terlebih dahulu", "bad");
-        if (!petugasEl.value)
-          return setStatus("Nama petugas wajib diisi", "bad");
-        if (!staffKeyEl.value)
-          return setStatus("Kunci petugas wajib diisi", "bad");
+        if (!hariEl.value) {
+          setStatus("Pilih Hari terlebih dahulu", "bad");
+          return false;
+        }
+        if (!petugasEl.value) {
+          setStatus("Nama petugas wajib diisi", "bad");
+          return false;
+        }
+        if (!staffKeyEl.value) {
+          setStatus("Kunci petugas wajib diisi", "bad");
+          return false;
+        }
         return true;
       }
 
       async function sendToken(token) {
         if (!validateForm()) return;
-
         lastTokenEl.textContent = token;
         setStatus("Mengirim...");
 
-        // offline -> queue
+        const qbytes = (localStorage.getItem(QKEY) || "").length;
+
         if (!navigator.onLine) {
           enqueue({ token, hari: hariEl.value });
-          beep(520, 90);
-          vibrate(35);
           setStatus("📴 Offline. Disimpan ke antrean.", "warn");
+          setDebug({
+            stage: "offline_queue",
+            token,
+            queueLen: loadQueue().length,
+            queueBytes: qbytes,
+          });
           return;
         }
 
-        // 1) POST
+        // POST
         try {
           const r = await postForm({
             token,
@@ -466,8 +427,6 @@
             petugas: petugasEl.value,
             k: staffKeyEl.value,
           });
-
-          const qbytes = (localStorage.getItem(QKEY) || "").length;
           setDebug({
             stage: "record_post",
             status: r.status,
@@ -477,26 +436,20 @@
             queueLen: loadQueue().length,
             queueBytes: qbytes,
           });
-
           if (r.json && r.json.message) {
             const msg = r.json.message;
-            if (msg.startsWith("✅")) {
-              beep(880, 70);
-              beep(1320, 60);
-              vibrate(45);
-              setStatus(msg, "ok");
-              return;
-            }
-            beep(520, 90);
-            vibrate(35);
-            setStatus(msg, "warn");
+            setStatus(msg, msg.startsWith("✅") ? "ok" : "warn");
             return;
           }
         } catch (err) {
-          setDebug({ stage: "record_post_error", error: String(err) });
+          setDebug({
+            stage: "record_post_error",
+            error: String(err),
+            queueBytes: qbytes,
+          });
         }
 
-        // 2) fallback GET
+        // GET fallback
         try {
           const g = await getQuery({
             token,
@@ -504,8 +457,6 @@
             petugas: petugasEl.value,
             k: staffKeyEl.value,
           });
-
-          const qbytes = (localStorage.getItem(QKEY) || "").length;
           setDebug({
             stage: "record_get_fallback",
             status: g.status,
@@ -515,41 +466,38 @@
             queueLen: loadQueue().length,
             queueBytes: qbytes,
           });
-
           if (g.json && g.json.message) {
             const msg = g.json.message;
-            if (msg.startsWith("✅")) {
-              beep(880, 70);
-              beep(1320, 60);
-              vibrate(45);
-              setStatus(msg, "ok");
-              return;
-            }
-            beep(520, 90);
-            vibrate(35);
-            setStatus(msg, "warn");
+            setStatus(msg, msg.startsWith("✅") ? "ok" : "warn");
             return;
           }
         } catch (err) {
-          setDebug({ stage: "record_get_error", error: String(err) });
+          setDebug({
+            stage: "record_get_error",
+            error: String(err),
+            queueBytes: qbytes,
+          });
         }
 
-        // 3) queue
+        // tetap gagal => antrean
         enqueue({ token, hari: hariEl.value });
-        beep(520, 90);
-        vibrate(35);
         setStatus("⚠️ Gagal kirim. Disimpan ke antrean.", "warn");
       }
 
-      // ===== SYNC CHUNK =====
       async function syncQueue() {
         if (!validateForm()) return;
-        if (!navigator.onLine) return setStatus("Masih offline.", "warn");
+        if (!navigator.onLine) {
+          setStatus("Masih offline.", "warn");
+          return;
+        }
 
         let q = loadQueue();
-        if (!q.length) return setStatus("Antrean kosong.", "ok");
+        if (!q.length) {
+          setStatus("Antrean kosong.", "ok");
+          return;
+        }
 
-        const CHUNK = 50; // aman
+        const CHUNK = 50;
         let inserted = 0,
           duplicates = 0,
           failed = 0;
@@ -558,7 +506,6 @@
 
         while (q.length) {
           const part = q.slice(0, CHUNK);
-
           try {
             const r = await postForm({
               page: "bulk",
@@ -595,21 +542,17 @@
             saveQueue(q);
           } catch (err) {
             setDebug({ stage: "bulk_chunk_error", error: String(err) });
-            setStatus("⚠️ Sync gagal di tengah jalan. Coba lagi.", "warn");
+            setStatus("⚠️ Sync gagal. Coba lagi.", "warn");
             return;
           }
         }
 
-        beep(880, 70);
-        beep(1320, 60);
-        vibrate(60);
         setStatus(
           `✅ Sync selesai: ${inserted} masuk, ${duplicates} duplikat, ${failed} gagal`,
           "ok",
         );
       }
 
-      // ===== RESET QUEUE =====
       btnResetQ.onclick = () => {
         localStorage.removeItem(QKEY);
         saveQueue([]);
@@ -618,53 +561,112 @@
         setDebug({ stage: "reset_queue", queueLen: 0, queueBytes: qbytes });
       };
 
-      // ===== CAMERA scan (BarcodeDetector) =====
+      // ======================
+      // SCAN ENGINE: BarcodeDetector (Android/desktop) + html5-qrcode fallback (iPhone)
+      // ======================
+      let engine = "none";
+      let scanning = false;
+
+      // BarcodeDetector vars
       let stream = null,
         detector = null,
-        scanning = false,
         lastSeen = "",
         lastAt = 0;
 
-      async function startScan() {
-        try {
-          detector =
-            "BarcodeDetector" in window
-              ? new BarcodeDetector({ formats: ["qr_code"] })
-              : null;
+      // html5-qrcode vars
+      let html5 = null;
 
-          if (!detector) {
-            setStatus(
-              "❌ Browser tidak support BarcodeDetector. Gunakan Chrome terbaru.",
-              "bad",
-            );
+      function pickEngine() {
+        if ("BarcodeDetector" in window) return "barcode";
+        return "html5";
+      }
+
+      // --- html5-qrcode loader (embed minimal)
+      // Kita load dari CDN yang stabil: jsdelivr (lebih stabil dari unpkg untuk package ini)
+      function loadHtml5Lib_() {
+        return new Promise((resolve, reject) => {
+          if (window.Html5Qrcode) return resolve();
+          const s = document.createElement("script");
+          s.src =
+            "https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.10/minified/html5-qrcode.min.js";
+          s.onload = () => resolve();
+          s.onerror = () =>
+            reject(new Error("Gagal load html5-qrcode library"));
+          document.head.appendChild(s);
+        });
+      }
+
+      async function startScan() {
+        if (!validateForm()) return;
+
+        engine = pickEngine();
+        modePill.textContent =
+          "Mode: " +
+          (engine === "barcode" ? "BarcodeDetector" : "html5-qrcode");
+
+        scanning = true;
+        hariEl.disabled = true;
+        btnStart.disabled = true;
+        btnStop.disabled = false;
+
+        try {
+          if (engine === "barcode") {
+            reader.classList.add("hidden");
+            video.classList.remove("hidden");
+
+            detector = new BarcodeDetector({ formats: ["qr_code"] });
+            stream = await navigator.mediaDevices.getUserMedia({
+              video: { facingMode: "environment" },
+            });
+            video.srcObject = stream;
+            await video.play();
+
+            capEl.textContent = "Kamera: aktif";
+            setStatus("Kamera aktif. Siap scan.", "ok");
+
+            tickBarcode_();
             return;
           }
 
-          stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: "environment" },
-          });
+          // html5-qrcode (iPhone fallback)
+          video.classList.add("hidden");
+          reader.classList.remove("hidden");
 
-          video.srcObject = stream;
-          await video.play();
+          await loadHtml5Lib_();
+          html5 = new Html5Qrcode("reader");
 
-          scanning = true;
-          hariEl.disabled = true;
-          btnStart.disabled = true;
-          btnStop.disabled = false;
           capEl.textContent = "Kamera: aktif";
-
           setStatus("Kamera aktif. Siap scan.", "ok");
-          tick();
-        } catch (err) {
-          setDebug({ stage: "camera_error", error: String(err) });
-          setStatus(
-            "❌ Kamera tidak bisa dibuka. Pastikan izin kamera Allow.",
-            "bad",
+
+          // Portrait box lebih besar
+          const qrbox = (vw) => {
+            const size = Math.floor(Math.min(vw * 0.78, 320));
+            return { width: size, height: size };
+          };
+
+          await html5.start(
+            { facingMode: "environment" },
+            { fps: 20, qrbox, disableFlip: false },
+            async (decodedText) => {
+              const token = extractToken(decodedText);
+              // throttle 1.2s
+              const now = Date.now();
+              if (token && !(token === lastSeen && now - lastAt < 1200)) {
+                lastSeen = token;
+                lastAt = now;
+                await sendToken(token);
+              }
+            },
+            () => {}, // ignore errors
           );
+        } catch (err) {
+          setDebug({ stage: "startScan_error", engine, error: String(err) });
+          setStatus("❌ Kamera gagal dibuka / izin ditolak.", "bad");
+          stopScan();
         }
       }
 
-      async function tick() {
+      async function tickBarcode_() {
         if (!scanning || !detector) return;
         try {
           const codes = await detector.detect(video);
@@ -680,17 +682,34 @@
         } catch (err) {
           setDebug({ stage: "detect_error", error: String(err) });
         }
-        requestAnimationFrame(tick);
+        requestAnimationFrame(tickBarcode_);
       }
 
-      function stopScan() {
+      async function stopScan() {
         scanning = false;
         hariEl.disabled = false;
         btnStart.disabled = false;
         btnStop.disabled = true;
 
-        stream?.getTracks().forEach((t) => t.stop());
+        // stop barcode
+        try {
+          stream?.getTracks().forEach((t) => t.stop());
+        } catch {}
+        stream = null;
+        detector = null;
+        try {
+          video.pause();
+        } catch {}
         video.srcObject = null;
+
+        // stop html5
+        try {
+          if (html5) {
+            await html5.stop();
+            await html5.clear();
+          }
+        } catch {}
+        html5 = null;
 
         capEl.textContent = "Kamera: -";
         setStatus("Scan dihentikan.", "warn");
@@ -703,15 +722,10 @@
       // init
       updateNet();
       saveQueue(loadQueue());
-
-      // debug awal: ukuran antrean di storage
-      const qbytes0 = (localStorage.getItem(QKEY) || "").length;
+      modePill.textContent =
+        "Mode: " +
+        (pickEngine() === "barcode" ? "BarcodeDetector" : "html5-qrcode");
       setStatus("Siap. Isi Hari, Nama Petugas, dan Kunci lalu Mulai Scan.");
-      setDebug({
-        stage: "init",
-        queueLen: loadQueue().length,
-        queueBytes: qbytes0,
-      });
     </script>
   </body>
 </html>
