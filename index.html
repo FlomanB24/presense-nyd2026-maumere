@@ -1,210 +1,717 @@
 <!doctype html>
-<html lang="id">
+<html>
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Scanner Kehadiran</title>
-
-    <script src="https://unpkg.com/html5-qrcode"></script>
-
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
     <style>
+      :root {
+        --gap: 12px;
+        --radius: 14px;
+        --control-h: 56px;
+        --font: 18px;
+        --pad-x: 14px;
+        --border: #e5e7eb;
+        --muted: #64748b;
+        --focus: rgba(9, 105, 218, 0.18);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
       body {
-        font-family: Arial, system-ui;
-        max-width: 900px;
-        margin: auto;
+        font-family: Arial, system-ui, sans-serif;
         padding: 14px;
-        background: #f8fafc;
+        max-width: 980px;
+        margin: auto;
+        background: #fff;
+      }
+
+      .row {
+        display: flex;
+        gap: var(--gap);
+        flex-wrap: wrap;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      h2 {
+        margin: 0;
+      }
+
+      input,
+      select,
+      button {
+        padding: 12px var(--pad-x);
+        font-size: var(--font);
+        min-height: var(--control-h);
+        border-radius: var(--radius);
+      }
+
+      input,
+      select {
+        width: 100%;
+        border: 1px solid #d0d7de;
+      }
+
+      input:focus,
+      select:focus {
+        border-color: #0969da;
+        box-shadow: 0 0 0 4px var(--focus);
+        outline: none;
       }
 
       button {
-        width: 100%;
-        padding: 16px;
-        font-size: 18px;
-        border-radius: 12px;
-        border: 0;
-        font-weight: bold;
+        font-weight: 700;
+        border: 1px solid #cbd5e1;
+        background: #f8fafc;
+        cursor: pointer;
       }
 
-      .start {
+      button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
+      #start {
         background: #0ea5e9;
-        color: white;
+        color: #fff;
       }
-      .stop {
+      #stop {
         background: #ef4444;
-        color: white;
+        color: #fff;
       }
-      .sync {
+      #syncNow {
         background: #16a34a;
-        color: white;
+        color: #fff;
+      }
+      #resetQ {
+        background: #64748b;
+        color: #fff;
+      }
+
+      .pill {
+        padding: 8px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        font-size: 14px;
+      }
+
+      .pill.right {
+        margin-left: auto;
       }
 
       video {
         width: 100%;
         border-radius: 14px;
+        border: 1px solid #ddd;
+        margin-top: 10px;
+        background: #000;
+        object-fit: cover;
+        aspect-ratio: 16/9;
       }
 
-      #reader {
-        margin-top: 10px;
+      /* Portrait untuk HP: QR tampak besar */
+      @media (max-width: 700px) {
+        video {
+          aspect-ratio: 4/5;
+        }
       }
 
-      .status {
-        margin-top: 10px;
-        padding: 12px;
+      .card {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 14px;
+        margin-top: 12px;
+      }
+
+      .ok {
+        color: #0f766e;
+        font-weight: 800;
+      }
+      .warn {
+        color: #b45309;
+        font-weight: 800;
+      }
+      .bad {
+        color: #b91c1c;
+        font-weight: 800;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      .field-pass {
+        position: relative;
+        width: 100%;
+      }
+
+      .field-pass input {
+        padding-right: 52px;
+      }
+
+      .eye-btn {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        min-height: auto;
+        border: none;
+        background: transparent;
         border-radius: 10px;
-        background: white;
-        border: 1px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
       }
 
-      .scan-box {
-        border: 4px solid #fbbf24;
-        border-radius: 20px;
+      .eye-btn:focus {
+        outline: none;
+        box-shadow: 0 0 0 4px var(--focus);
+      }
+
+      .eye-ic {
+        width: 22px;
+        height: 22px;
+        fill: #334155;
+      }
+
+      pre {
+        white-space: pre-wrap;
+        margin: 8px 0 0;
+        color: #334155;
+        font-size: 13px;
+        line-height: 1.25rem;
+      }
+
+      @media (max-width: 520px) {
+        .row > * {
+          width: 100%;
+        }
       }
     </style>
   </head>
 
   <body>
-    <h2>Scanner Kehadiran</h2>
+    <div class="row">
+      <h2>Scanner Kehadiran (Petugas)</h2>
 
-    <select id="hari">
-      <option value="">Pilih Hari</option>
-      <option>Hari-1</option>
-      <option>Hari-2</option>
-      <option>Hari-3</option>
-      <option>Hari-4</option>
-      <option>Hari-5</option>
-    </select>
+      <span class="pill right" id="cap">Kamera: -</span>
+      <span class="pill" id="net">Online</span>
+      <span class="pill" id="pend">Pending: 0</span>
+    </div>
 
-    <input id="petugas" placeholder="Nama Petugas" />
-    <input id="key" placeholder="Staff Key" />
+    <div class="row">
+      <select id="hari">
+        <option value="">Pilih Hari</option>
+        <option>Hari-1</option>
+        <option>Hari-2</option>
+        <option>Hari-3</option>
+        <option>Hari-4</option>
+        <option>Hari-5</option>
+      </select>
 
-    <br /><br />
+      <input
+        id="petugas"
+        placeholder="Nama Petugas (wajib diisi setiap sesi)"
+      />
 
-    <button class="start" id="start">Mulai Scan</button>
-    <button class="stop" id="stop">Stop</button>
-    <button class="sync" id="sync">Sync Sekarang</button>
+      <div class="field-pass">
+        <input
+          id="staffKey"
+          type="password"
+          placeholder="Kunci Petugas (tidak disimpan)"
+        />
 
-    <div id="reader"></div>
+        <button
+          type="button"
+          id="toggleEye"
+          class="eye-btn"
+          aria-label="Tampilkan/Sembunyikan kunci"
+          title="Tampilkan/Sembunyikan"
+        >
+          <svg
+            id="eyeOpen"
+            class="eye-ic hidden"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              d="M12 5c-7 0-10 7-10 7s3 7 10 7 10-7 10-7-3-7-10-7zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-2.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"
+            />
+          </svg>
 
-    <div class="status" id="status">Status: siap</div>
+          <svg
+            id="eyeOff"
+            class="eye-ic"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              d="M2.3 3.7 3.7 2.3l18 18-1.4 1.4-2.2-2.2A10.9 10.9 0 0 1 12 21C5 21 2 14 2 14a20.2 20.2 0 0 1 4.3-6.1L2.3 3.7zM12 7c7 0 10 7 10 7a19.8 19.8 0 0 1-2.7 4l-3-3a5 5 0 0 0-6.3-6.3l-1.8-1.8A10.7 10.7 0 0 1 12 7z"
+            />
+          </svg>
+        </button>
+      </div>
+
+      <button id="start">Mulai Scan</button>
+      <button id="stop" disabled>Stop</button>
+      <button id="syncNow">Sync Sekarang</button>
+      <button id="resetQ">Reset Antrean</button>
+    </div>
+
+    <video id="video" playsinline></video>
+
+    <div class="card">
+      <div><b>Status:</b> <span id="status"></span></div>
+      <div><b>Token terakhir:</b> <span id="lastToken">-</span></div>
+
+      <div class="hidden" id="debugBox" style="margin-top: 10px">
+        <div><b>DEBUG:</b></div>
+        <pre id="debug"></pre>
+      </div>
+
+      <button id="toggleDebug" style="margin-top: 10px">Tampilkan Debug</button>
+    </div>
 
     <script>
-      const API =
-        "https://script.google.com/macros/s/AKfycbzv98b-bj8S8Qs6X9qOYcqEamCFP_AR-104ilA5syJb03c0vwSsdekC1Lg1rcjFjfTV4Q/exec";
+      // =======================
+      // WAJIB: GANTI URL WEBAPP /exec ANDA
+      // =======================
+      const API = "PASTE_URL_WEBAPP_EXEC_ANDA_DI_SINI";
+      // =======================
 
+      const video = document.getElementById("video");
       const statusEl = document.getElementById("status");
+      const lastTokenEl = document.getElementById("lastToken");
+      const capEl = document.getElementById("cap");
+      const netEl = document.getElementById("net");
+      const pendEl = document.getElementById("pend");
 
-      function setStatus(t) {
-        statusEl.innerHTML = "Status: " + t;
+      const hariEl = document.getElementById("hari");
+      const petugasEl = document.getElementById("petugas");
+      const staffKeyEl = document.getElementById("staffKey");
+
+      const btnStart = document.getElementById("start");
+      const btnStop = document.getElementById("stop");
+      const btnSyncNow = document.getElementById("syncNow");
+      const btnResetQ = document.getElementById("resetQ");
+
+      const btnEye = document.getElementById("toggleEye");
+      const eyeOpen = document.getElementById("eyeOpen");
+      const eyeOff = document.getElementById("eyeOff");
+
+      const debugBox = document.getElementById("debugBox");
+      const debugEl = document.getElementById("debug");
+      const btnToggleDebug = document.getElementById("toggleDebug");
+      let showDebug = false;
+
+      btnToggleDebug.onclick = () => {
+        showDebug = !showDebug;
+        debugBox.classList.toggle("hidden", !showDebug);
+        btnToggleDebug.textContent = showDebug
+          ? "Sembunyikan Debug"
+          : "Tampilkan Debug";
+      };
+
+      btnEye.onclick = () => {
+        const isHidden = staffKeyEl.type === "password";
+        staffKeyEl.type = isHidden ? "text" : "password";
+        eyeOpen.classList.toggle("hidden", !isHidden);
+        eyeOff.classList.toggle("hidden", isHidden);
+        staffKeyEl.focus();
+      };
+
+      function setStatus(msg, cls = "") {
+        statusEl.className = cls;
+        statusEl.textContent = msg;
+      }
+
+      function setDebug(obj) {
+        if (!showDebug) return;
+        debugEl.textContent =
+          typeof obj === "string" ? obj : JSON.stringify(obj, null, 2);
       }
 
       function extractToken(t) {
         const m = String(t).match(/TOKEN\s*=\s*([A-Za-z0-9-_]+)/i);
-        return m ? m[1] : t;
+        return (m ? m[1] : t).trim();
       }
 
-      function queuePush(item) {
-        let q = JSON.parse(localStorage.getItem("queue") || "[]");
+      // ===== Offline Queue =====
+      const QKEY = "ABSEN_QUEUE_V2";
+
+      function loadQueue() {
+        try {
+          return JSON.parse(localStorage.getItem(QKEY) || "[]");
+        } catch {
+          return [];
+        }
+      }
+      function saveQueue(q) {
+        localStorage.setItem(QKEY, JSON.stringify(q));
+        pendEl.textContent = "Pending: " + q.length;
+      }
+      function enqueue(item) {
+        const q = loadQueue();
         q.push(item);
-        localStorage.setItem("queue", JSON.stringify(q));
+        saveQueue(q);
       }
 
-      function queueGet() {
-        return JSON.parse(localStorage.getItem("queue") || "[]");
+      // ===== Net =====
+      function updateNet() {
+        netEl.textContent = navigator.onLine ? "Online" : "Offline";
       }
+      window.addEventListener("online", () => {
+        updateNet();
+        syncQueue();
+      });
+      window.addEventListener("offline", updateNet);
 
-      function queueClear() {
-        localStorage.removeItem("queue");
-      }
-
+      // ===== HTTP helpers (POST form, fallback GET) =====
       async function postForm(obj) {
         const body = new URLSearchParams(obj);
-
         const res = await fetch(API, {
           method: "POST",
           headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
+            "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
           },
           body,
+          cache: "no-store",
+          redirect: "follow",
         });
+        const text = await res.text();
+        let json = null;
+        try {
+          json = JSON.parse(text);
+        } catch {}
+        return { ok: res.ok, status: res.status, text, json };
+      }
 
-        return res.json();
+      async function getQuery(obj) {
+        const url = new URL(API);
+        Object.entries(obj).forEach(([k, v]) => url.searchParams.set(k, v));
+        const res = await fetch(url.toString(), {
+          cache: "no-store",
+          redirect: "follow",
+        });
+        const text = await res.text();
+        let json = null;
+        try {
+          json = JSON.parse(text);
+        } catch {}
+        return { ok: res.ok, status: res.status, text, json };
+      }
+
+      function beep(freq = 880, ms = 70) {
+        try {
+          const Ctx = window.AudioContext || window.webkitAudioContext;
+          const ctx = new Ctx();
+          const o = ctx.createOscillator();
+          const g = ctx.createGain();
+          o.type = "square";
+          o.frequency.value = freq;
+          o.connect(g);
+          g.connect(ctx.destination);
+          g.gain.value = 0.04;
+          o.start();
+          setTimeout(() => {
+            o.stop();
+            ctx.close();
+          }, ms);
+        } catch {}
+      }
+      function vibrate(ms = 40) {
+        try {
+          navigator.vibrate?.(ms);
+        } catch {}
+      }
+
+      function validateForm() {
+        if (!hariEl.value)
+          return setStatus("Pilih Hari terlebih dahulu", "bad");
+        if (!petugasEl.value)
+          return setStatus("Nama petugas wajib diisi", "bad");
+        if (!staffKeyEl.value)
+          return setStatus("Kunci petugas wajib diisi", "bad");
+        return true;
       }
 
       async function sendToken(token) {
-        try {
-          const data = await postForm({
-            token,
-            hari: hari.value,
-            petugas: petugas.value,
-            k: key.value,
-          });
+        if (!validateForm()) return;
 
-          if (data.ok) {
-            setStatus("✅ " + data.message);
-          } else {
-            setStatus("⚠️ " + data.message);
-          }
-        } catch (e) {
-          queuePush({
-            token,
-            hari: hari.value,
-          });
+        lastTokenEl.textContent = token;
+        setStatus("Mengirim...");
 
-          setStatus("⚠️ Gagal kirim. Disimpan ke antrean.");
-        }
-      }
-
-      async function syncQueue() {
-        let q = queueGet();
-
-        if (!q.length) {
-          setStatus("Tidak ada antrean.");
+        // offline -> queue
+        if (!navigator.onLine) {
+          enqueue({ token, hari: hariEl.value });
+          beep(520, 90);
+          vibrate(35);
+          setStatus("📴 Offline. Disimpan ke antrean.", "warn");
           return;
         }
 
+        // 1) POST
         try {
-          const data = await postForm({
-            page: "bulk",
-            items: JSON.stringify(q),
-            petugas: petugas.value,
-            k: key.value,
+          const r = await postForm({
+            token,
+            hari: hariEl.value,
+            petugas: petugasEl.value,
+            k: staffKeyEl.value,
           });
 
-          if (data.ok) {
-            queueClear();
-            setStatus("✅ Sync berhasil.");
-          } else {
-            setStatus("⚠️ Sync gagal.");
+          const qbytes = (localStorage.getItem(QKEY) || "").length;
+          setDebug({
+            stage: "record_post",
+            status: r.status,
+            ok: r.ok,
+            json: r.json,
+            text: r.text?.slice(0, 200),
+            queueLen: loadQueue().length,
+            queueBytes: qbytes,
+          });
+
+          if (r.json && r.json.message) {
+            const msg = r.json.message;
+            if (msg.startsWith("✅")) {
+              beep(880, 70);
+              beep(1320, 60);
+              vibrate(45);
+              setStatus(msg, "ok");
+              return;
+            }
+            beep(520, 90);
+            vibrate(35);
+            setStatus(msg, "warn");
+            return;
           }
-        } catch (e) {
-          setStatus("⚠️ Server tidak bisa dihubungi.");
+        } catch (err) {
+          setDebug({ stage: "record_post_error", error: String(err) });
+        }
+
+        // 2) fallback GET
+        try {
+          const g = await getQuery({
+            token,
+            hari: hariEl.value,
+            petugas: petugasEl.value,
+            k: staffKeyEl.value,
+          });
+
+          const qbytes = (localStorage.getItem(QKEY) || "").length;
+          setDebug({
+            stage: "record_get_fallback",
+            status: g.status,
+            ok: g.ok,
+            json: g.json,
+            text: g.text?.slice(0, 200),
+            queueLen: loadQueue().length,
+            queueBytes: qbytes,
+          });
+
+          if (g.json && g.json.message) {
+            const msg = g.json.message;
+            if (msg.startsWith("✅")) {
+              beep(880, 70);
+              beep(1320, 60);
+              vibrate(45);
+              setStatus(msg, "ok");
+              return;
+            }
+            beep(520, 90);
+            vibrate(35);
+            setStatus(msg, "warn");
+            return;
+          }
+        } catch (err) {
+          setDebug({ stage: "record_get_error", error: String(err) });
+        }
+
+        // 3) queue
+        enqueue({ token, hari: hariEl.value });
+        beep(520, 90);
+        vibrate(35);
+        setStatus("⚠️ Gagal kirim. Disimpan ke antrean.", "warn");
+      }
+
+      // ===== SYNC CHUNK =====
+      async function syncQueue() {
+        if (!validateForm()) return;
+        if (!navigator.onLine) return setStatus("Masih offline.", "warn");
+
+        let q = loadQueue();
+        if (!q.length) return setStatus("Antrean kosong.", "ok");
+
+        const CHUNK = 50; // aman
+        let inserted = 0,
+          duplicates = 0,
+          failed = 0;
+
+        setStatus("Sync antrean...", "warn");
+
+        while (q.length) {
+          const part = q.slice(0, CHUNK);
+
+          try {
+            const r = await postForm({
+              page: "bulk",
+              items: JSON.stringify(part),
+              petugas: petugasEl.value,
+              k: staffKeyEl.value,
+            });
+
+            const qbytes = (localStorage.getItem(QKEY) || "").length;
+            setDebug({
+              stage: "bulk_chunk",
+              chunkSize: part.length,
+              status: r.status,
+              ok: r.ok,
+              json: r.json,
+              text: r.text?.slice(0, 200),
+              queueLen: q.length,
+              queueBytes: qbytes,
+            });
+
+            if (!r.json || r.json.ok === false) {
+              setStatus(
+                "⛔ Sync ditolak: " + (r.json?.message || "unknown"),
+                "bad",
+              );
+              return;
+            }
+
+            inserted += r.json.inserted || 0;
+            duplicates += r.json.duplicates || 0;
+            failed += r.json.failed || 0;
+
+            q = q.slice(part.length);
+            saveQueue(q);
+          } catch (err) {
+            setDebug({ stage: "bulk_chunk_error", error: String(err) });
+            setStatus("⚠️ Sync gagal di tengah jalan. Coba lagi.", "warn");
+            return;
+          }
+        }
+
+        beep(880, 70);
+        beep(1320, 60);
+        vibrate(60);
+        setStatus(
+          `✅ Sync selesai: ${inserted} masuk, ${duplicates} duplikat, ${failed} gagal`,
+          "ok",
+        );
+      }
+
+      // ===== RESET QUEUE =====
+      btnResetQ.onclick = () => {
+        localStorage.removeItem(QKEY);
+        saveQueue([]);
+        setStatus("✅ Antrean direset.", "ok");
+        const qbytes = (localStorage.getItem(QKEY) || "").length;
+        setDebug({ stage: "reset_queue", queueLen: 0, queueBytes: qbytes });
+      };
+
+      // ===== CAMERA scan (BarcodeDetector) =====
+      let stream = null,
+        detector = null,
+        scanning = false,
+        lastSeen = "",
+        lastAt = 0;
+
+      async function startScan() {
+        try {
+          detector =
+            "BarcodeDetector" in window
+              ? new BarcodeDetector({ formats: ["qr_code"] })
+              : null;
+
+          if (!detector) {
+            setStatus(
+              "❌ Browser tidak support BarcodeDetector. Gunakan Chrome terbaru.",
+              "bad",
+            );
+            return;
+          }
+
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "environment" },
+          });
+
+          video.srcObject = stream;
+          await video.play();
+
+          scanning = true;
+          hariEl.disabled = true;
+          btnStart.disabled = true;
+          btnStop.disabled = false;
+          capEl.textContent = "Kamera: aktif";
+
+          setStatus("Kamera aktif. Siap scan.", "ok");
+          tick();
+        } catch (err) {
+          setDebug({ stage: "camera_error", error: String(err) });
+          setStatus(
+            "❌ Kamera tidak bisa dibuka. Pastikan izin kamera Allow.",
+            "bad",
+          );
         }
       }
 
-      let scanner;
+      async function tick() {
+        if (!scanning || !detector) return;
+        try {
+          const codes = await detector.detect(video);
+          if (codes.length) {
+            const token = extractToken(codes[0].rawValue);
+            const now = Date.now();
+            if (token && !(token === lastSeen && now - lastAt < 1200)) {
+              lastSeen = token;
+              lastAt = now;
+              await sendToken(token);
+            }
+          }
+        } catch (err) {
+          setDebug({ stage: "detect_error", error: String(err) });
+        }
+        requestAnimationFrame(tick);
+      }
 
-      document.getElementById("start").onclick = async () => {
-        scanner = new Html5Qrcode("reader");
+      function stopScan() {
+        scanning = false;
+        hariEl.disabled = false;
+        btnStart.disabled = false;
+        btnStop.disabled = true;
 
-        await scanner.start(
-          { facingMode: "environment" },
-          {
-            fps: 20,
-            qrbox: { width: 250, height: 250 },
-          },
-          (decoded) => {
-            const token = extractToken(decoded);
+        stream?.getTracks().forEach((t) => t.stop());
+        video.srcObject = null;
 
-            sendToken(token);
-          },
-        );
-      };
+        capEl.textContent = "Kamera: -";
+        setStatus("Scan dihentikan.", "warn");
+      }
 
-      document.getElementById("stop").onclick = async () => {
-        if (scanner) await scanner.stop();
-      };
+      btnStart.onclick = startScan;
+      btnStop.onclick = stopScan;
+      btnSyncNow.onclick = syncQueue;
 
-      document.getElementById("sync").onclick = syncQueue;
+      // init
+      updateNet();
+      saveQueue(loadQueue());
+
+      // debug awal: ukuran antrean di storage
+      const qbytes0 = (localStorage.getItem(QKEY) || "").length;
+      setStatus("Siap. Isi Hari, Nama Petugas, dan Kunci lalu Mulai Scan.");
+      setDebug({
+        stage: "init",
+        queueLen: loadQueue().length,
+        queueBytes: qbytes0,
+      });
     </script>
   </body>
 </html>
