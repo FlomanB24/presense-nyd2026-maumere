@@ -6,86 +6,241 @@
       content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
     <title>Dashboard Kehadiran</title>
+
     <style>
       :root {
+        /* Kahoot-ish theme */
+        --bg1: #2a0a6a;
+        --bg2: #4b19a8;
+
+        --card: rgba(255, 255, 255, 0.1);
+        --card2: rgba(255, 255, 255, 0.14);
+        --stroke: rgba(255, 255, 255, 0.18);
+
+        --text: #ffffff;
+        --muted: rgba(255, 255, 255, 0.75);
+
+        --btn: rgba(255, 255, 255, 0.12);
+        --btn2: rgba(255, 255, 255, 0.18);
+
+        --shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
+
+        --r: 18px;
         --gap: 12px;
-        --r: 14px;
-        --b: #e5e7eb;
-        --m: #64748b;
-        --ok: #0f766e;
-        --bad: #b91c1c;
+
+        --a1: #ff2e83; /* pink */
+        --a2: #20e3b2; /* green */
+        --a3: #ffd166; /* yellow */
+        --a4: #4cc9f0; /* cyan */
+        --a5: #a78bfa; /* violet */
+
+        --bad: #ff4d4d;
+        --ok: #20e3b2;
       }
+
       * {
         box-sizing: border-box;
       }
+      html,
       body {
-        font-family: Arial, system-ui, sans-serif;
+        height: 100%;
+      }
+      body {
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          Arial,
+          "Noto Sans",
+          "Helvetica Neue",
+          sans-serif;
         margin: 0;
-        background: #fff;
+        color: var(--text);
+        background:
+          radial-gradient(
+            1200px 800px at 10% 10%,
+            rgba(255, 46, 131, 0.2),
+            transparent 60%
+          ),
+          radial-gradient(
+            1200px 800px at 90% 20%,
+            rgba(32, 227, 178, 0.18),
+            transparent 55%
+          ),
+          radial-gradient(
+            900px 700px at 30% 90%,
+            rgba(76, 201, 240, 0.18),
+            transparent 55%
+          ),
+          linear-gradient(160deg, var(--bg1), var(--bg2));
         padding: 14px;
-        max-width: 1200px;
+        max-width: 1320px;
         margin: auto;
       }
+
       h2 {
         margin: 0 0 6px 0;
+        letter-spacing: 0.2px;
+        font-weight: 1000;
+        font-size: 28px;
       }
+
       .muted {
-        color: var(--m);
+        color: var(--muted);
       }
+
       .row {
         display: flex;
         gap: var(--gap);
         flex-wrap: wrap;
         align-items: center;
       }
+
       select,
       button {
-        padding: 12px 14px;
         border-radius: var(--r);
-        border: 1px solid #d0d7de;
         font-size: 16px;
-        min-height: 48px;
+        min-height: 50px;
+        padding: 12px 14px;
+        color: var(--text);
+        border: 1px solid var(--stroke);
+        background: var(--btn);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+        outline: none;
       }
+
+      select {
+        appearance: none;
+        background-image:
+          linear-gradient(
+            45deg,
+            transparent 50%,
+            rgba(255, 255, 255, 0.85) 50%
+          ),
+          linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.85) 50%,
+            transparent 50%
+          );
+        background-position:
+          calc(100% - 18px) calc(50% - 2px),
+          calc(100% - 12px) calc(50% - 2px);
+        background-size:
+          6px 6px,
+          6px 6px;
+        background-repeat: no-repeat;
+        padding-right: 38px;
+      }
+
       button {
         cursor: pointer;
-        font-weight: 700;
-        background: #f8fafc;
+        font-weight: 1000;
+        background: linear-gradient(180deg, var(--btn2), var(--btn));
+        transition:
+          transform 0.06s ease,
+          filter 0.15s ease;
       }
+      button:active {
+        transform: translateY(1px) scale(0.99);
+      }
+      button:hover {
+        filter: brightness(1.08);
+      }
+
       .pill {
         padding: 8px 12px;
-        border: 1px solid var(--b);
+        border: 1px solid var(--stroke);
         border-radius: 999px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        box-shadow: var(--shadow);
         font-size: 14px;
+        font-weight: 900;
       }
-      .grid {
+
+      .card {
+        border: 1px solid var(--stroke);
+        border-radius: var(--r);
+        padding: 14px;
+        background: linear-gradient(180deg, var(--card2), var(--card));
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+      }
+
+      .grid2 {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 12px;
         margin-top: 12px;
       }
-      .card {
-        border: 1px solid var(--b);
-        border-radius: var(--r);
-        padding: 12px;
+      .grid3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-top: 12px;
       }
+
+      .kpi {
+        font-size: 34px;
+        font-weight: 1000;
+        letter-spacing: 0.4px;
+        margin-top: 4px;
+      }
+
       .bad {
         color: var(--bad);
-        font-weight: 800;
+        font-weight: 1000;
       }
+
       canvas {
         width: 100% !important;
-        height: 320px !important;
+        height: 300px !important;
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: 14px;
+        padding: 10px;
       }
-      @media (max-width: 900px) {
-        .grid {
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+      }
+      th,
+      td {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+        padding: 10px 10px;
+        text-align: left;
+        font-size: 14px;
+      }
+      th {
+        background: rgba(255, 255, 255, 0.08);
+        font-weight: 1000;
+      }
+      th.sort {
+        cursor: pointer;
+      }
+      tr:hover td {
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      @media (max-width: 980px) {
+        .grid2,
+        .grid3 {
           grid-template-columns: 1fr;
         }
         canvas {
-          height: 300px !important;
+          height: 280px !important;
         }
       }
     </style>
   </head>
+
   <body>
     <div class="row" style="justify-content: space-between">
       <div>
@@ -96,11 +251,22 @@
     </div>
 
     <div class="row" style="margin-top: 10px">
+      <!-- KPI Harian -->
+      <select id="offset">
+        <option value="0">Hari ini</option>
+        <option value="1">Kemarin</option>
+        <option value="2">2 hari lalu</option>
+        <option value="3">3 hari lalu</option>
+        <option value="4">4 hari lalu</option>
+        <option value="5">5 hari lalu</option>
+      </select>
+
+      <!-- Trend -->
       <select id="days">
-        <option value="7">7 hari</option>
-        <option value="14" selected>14 hari</option>
-        <option value="30">30 hari</option>
-        <option value="60">60 hari</option>
+        <option value="7">Trend 7 hari</option>
+        <option value="14" selected>Trend 14 hari</option>
+        <option value="30">Trend 30 hari</option>
+        <option value="60">Trend 60 hari</option>
       </select>
 
       <select id="group">
@@ -121,9 +287,61 @@
 
     <div id="err" class="bad" style="margin-top: 10px; display: none"></div>
 
-    <div class="grid">
+    <!-- KPI -->
+    <div class="grid3">
       <div class="card">
-        <b>Jumlah Peserta per Hari (Bar)</b>
+        <div class="muted">Total Hadir (tanggal dipilih)</div>
+        <div class="kpi" id="kpiTotal">-</div>
+        <div class="muted" id="kpiHariKe">-</div>
+      </div>
+      <div class="card">
+        <div class="muted">Gender</div>
+        <div
+          style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px"
+        >
+          <span class="pill" id="kpiL">L: -</span>
+          <span class="pill" id="kpiP">P: -</span>
+          <span class="pill" id="kpiO">Other: -</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="muted">Update</div>
+        <div id="updated" class="muted" style="margin-top: 10px">-</div>
+      </div>
+    </div>
+
+    <!-- Status + Keuskupan -->
+    <div class="grid2">
+      <div class="card">
+        <b>Komposisi Status Peserta (tanggal dipilih)</b>
+        <div class="muted" style="margin-top: 6px">
+          OMK, Pastor, Suster, Frater, Panitia, dll.
+        </div>
+        <canvas id="barStatus"></canvas>
+      </div>
+
+      <div class="card">
+        <b>Jumlah Peserta per Keuskupan (tanggal dipilih)</b>
+        <div class="muted" style="margin-top: 6px">Total + L/P/Other.</div>
+        <table id="tblKeus">
+          <thead>
+            <tr>
+              <th class="sort" data-k="name">Keuskupan</th>
+              <th class="sort" data-k="L">L</th>
+              <th class="sort" data-k="P">P</th>
+              <th class="sort" data-k="other">Other</th>
+              <th class="sort" data-k="total">Total</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Trend Charts -->
+    <div class="grid2">
+      <div class="card">
+        <b>Jumlah Peserta per Hari (Trend Bar)</b>
         <div class="muted" style="margin-top: 6px">
           Total kehadiran per tanggal (gabungan semua HariKe).
         </div>
@@ -133,44 +351,281 @@
       <div class="card">
         <b>Trend Kehadiran (Line)</b>
         <div class="muted" style="margin-top: 6px">
-          Top keuskupan/paroki (berdasarkan total selama periode).
+          Top keuskupan/paroki selama periode.
         </div>
         <canvas id="lineTrend"></canvas>
       </div>
     </div>
 
+    <!-- Paroki filter -->
+    <div class="card" style="margin-top: 12px">
+      <div class="row" style="justify-content: space-between">
+        <div>
+          <b>Paroki (Filter by Keuskupan)</b>
+          <div class="muted" style="margin-top: 6px">
+            Pilih keuskupan untuk melihat paroki & jumlah hadirnya.
+          </div>
+        </div>
+        <div class="row">
+          <select id="keusFilter"></select>
+          <select id="parokiSort">
+            <option value="total" selected>Sort: Total</option>
+            <option value="L">Sort: L</option>
+            <option value="P">Sort: P</option>
+            <option value="other">Sort: Other</option>
+            <option value="name">Sort: Nama Paroki</option>
+          </select>
+        </div>
+      </div>
+
+      <table id="tblParoki">
+        <thead>
+          <tr>
+            <th>Paroki</th>
+            <th>L</th>
+            <th>P</th>
+            <th>Other</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+      // Global Chart.js style (Kahoot-ish)
+      Chart.defaults.color = "rgba(255,255,255,.88)";
+      Chart.defaults.borderColor = "rgba(255,255,255,.16)";
+      Chart.defaults.font.family =
+        'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial';
+      Chart.defaults.font.weight = "700";
+    </script>
 
     <script>
       // ✅ GANTI URL WEB APP /exec ANDA
       const API =
-        "https://script.google.com/macros/s/AKfycbyeNfAvXRsbo1DXc_uEOSweh1cRuMTJyh8c4zXUJoZtg1glKQLLSTsuUfQZcWxpoIxBLw/exec";
+        "https://script.google.com/macros/s/AKfycbyKTuU6mHQ4lHoz3TgX34JBtJCdVfMz6pECcUrNXI_D9ri32Y3t1jrPTGYeOeP3qXPP0w/exec";
+
+      const PALETTE = [
+        "#ff2e83",
+        "#20e3b2",
+        "#ffd166",
+        "#4cc9f0",
+        "#a78bfa",
+        "#f72585",
+        "#3a86ff",
+        "#ffbe0b",
+      ];
 
       const elSub = document.getElementById("sub");
       const elLive = document.getElementById("live");
       const elErr = document.getElementById("err");
+      const elUpdated = document.getElementById("updated");
 
+      const selOffset = document.getElementById("offset");
       const selDays = document.getElementById("days");
       const selGroup = document.getElementById("group");
       const selTop = document.getElementById("top");
 
+      const kpiTotal = document.getElementById("kpiTotal");
+      const kpiHariKe = document.getElementById("kpiHariKe");
+      const kpiL = document.getElementById("kpiL");
+      const kpiP = document.getElementById("kpiP");
+      const kpiO = document.getElementById("kpiO");
+
       const btnRefresh = document.getElementById("refresh");
       const btnAuto = document.getElementById("auto");
 
+      const tbodyKeus = document.querySelector("#tblKeus tbody");
+      const keusFilter = document.getElementById("keusFilter");
+      const parokiSort = document.getElementById("parokiSort");
+      const tbodyParoki = document.querySelector("#tblParoki tbody");
+
       let autoTimer = null;
-      let barChart = null;
-      let lineChart = null;
+
+      let barDaily = null;
+      let lineTrend = null;
+      let barStatus = null;
+
+      let sortKeusKey = "total";
+      let sortKeusDir = -1;
+
+      let lastStats = null;
 
       function showErr(msg) {
         elErr.style.display = msg ? "block" : "none";
         elErr.textContent = msg || "";
       }
+      function esc(s) {
+        return String(s ?? "").replace(
+          /[&<>"']/g,
+          (m) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[m],
+        );
+      }
+
+      async function loadStats() {
+        const url = new URL(API);
+        url.searchParams.set("page", "stats");
+        url.searchParams.set("offset", selOffset.value);
+
+        const res = await fetch(url.toString(), { cache: "no-store" });
+        const json = await res.json();
+        if (!json.ok) throw new Error(json.message || "Gagal load stats.");
+
+        lastStats = json;
+
+        // KPI
+        kpiTotal.textContent = json.total ?? 0;
+
+        const byHari = json.byHari || {};
+        const hariTxt = Object.keys(byHari).length
+          ? Object.keys(byHari)
+              .sort()
+              .map((k) => `${k}:${byHari[k]}`)
+              .join(" • ")
+          : "-";
+        kpiHariKe.textContent = "HariKe: " + hariTxt;
+
+        const g = json.gender || { L: 0, P: 0, other: 0 };
+        kpiL.textContent = `L: ${g.L || 0}`;
+        kpiP.textContent = `P: ${g.P || 0}`;
+        kpiO.textContent = `Other: ${g.other || 0}`;
+
+        // Status chart
+        const byStatus = json.byStatus || {};
+        const sKeys = Object.keys(byStatus).sort(
+          (a, b) => byStatus[b] - byStatus[a] || a.localeCompare(b),
+        );
+
+        const sLabels = sKeys;
+        const sVals = sKeys.map((k) => byStatus[k]);
+
+        if (barStatus) barStatus.destroy();
+        barStatus = new Chart(document.getElementById("barStatus"), {
+          type: "bar",
+          data: {
+            labels: sLabels,
+            datasets: [
+              {
+                label: "Jumlah",
+                data: sVals,
+                backgroundColor: sLabels.map(
+                  (_, i) => PALETTE[i % PALETTE.length] + "cc",
+                ),
+                borderColor: sLabels.map((_, i) => PALETTE[i % PALETTE.length]),
+                borderWidth: 2,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true } },
+            plugins: { legend: { labels: { boxWidth: 14 } } },
+          },
+        });
+
+        // Keuskupan table
+        const byKeus = json.byKeuskupan || {};
+        renderKeuskupanTable(byKeus);
+
+        // Filter dropdown keuskupan
+        renderKeuskupanFilter(json.byParokiByKeuskupan || {});
+      }
+
+      function renderKeuskupanTable(byKeus) {
+        const rows = Object.entries(byKeus).map(([name, v]) => ({
+          name,
+          L: v.L || 0,
+          P: v.P || 0,
+          other: v.other || 0,
+          total: v.total || 0,
+        }));
+        rows.sort(
+          (a, b) =>
+            (a[sortKeusKey] - b[sortKeusKey]) * sortKeusDir ||
+            a.name.localeCompare(b.name),
+        );
+
+        tbodyKeus.innerHTML =
+          rows
+            .map(
+              (r) => `
+        <tr>
+          <td>${esc(r.name)}</td>
+          <td>${r.L}</td>
+          <td>${r.P}</td>
+          <td>${r.other}</td>
+          <td><b>${r.total}</b></td>
+        </tr>
+      `,
+            )
+            .join("") ||
+          `<tr><td colspan="5" class="muted">Belum ada data.</td></tr>`;
+      }
+
+      function renderKeuskupanFilter(byParokiByKeus) {
+        const keusList = Object.keys(byParokiByKeus).sort();
+        keusFilter.innerHTML = keusList
+          .map((k) => `<option value="${esc(k)}">${esc(k)}</option>`)
+          .join("");
+        if (keusList.length) {
+          keusFilter.value = keusList[0];
+          renderParokiTable();
+        } else {
+          keusFilter.innerHTML = `<option value="">(Belum ada data)</option>`;
+          tbodyParoki.innerHTML = `<tr><td colspan="5" class="muted">Belum ada data.</td></tr>`;
+        }
+      }
+
+      function renderParokiTable() {
+        const json = lastStats;
+        if (!json) return;
+
+        const map = json.byParokiByKeuskupan || {};
+        const keus = keusFilter.value;
+        const parMap = map[keus] || {};
+        const rows = Object.entries(parMap).map(([name, v]) => ({
+          name,
+          L: v.L || 0,
+          P: v.P || 0,
+          other: v.other || 0,
+          total: v.total || 0,
+        }));
+
+        const key = parokiSort.value;
+        rows.sort((a, b) => {
+          if (key === "name") return a.name.localeCompare(b.name);
+          return b[key] - a[key] || a.name.localeCompare(b.name);
+        });
+
+        tbodyParoki.innerHTML =
+          rows
+            .map(
+              (r) => `
+        <tr>
+          <td>${esc(r.name)}</td>
+          <td>${r.L}</td>
+          <td>${r.P}</td>
+          <td>${r.other}</td>
+          <td><b>${r.total}</b></td>
+        </tr>
+      `,
+            )
+            .join("") ||
+          `<tr><td colspan="5" class="muted">Tidak ada paroki.</td></tr>`;
+      }
 
       async function loadTrend() {
-        showErr("");
-        elLive.textContent = "Live: loading...";
-
         const url = new URL(API);
         url.searchParams.set("page", "trend");
         url.searchParams.set("days", selDays.value);
@@ -179,23 +634,14 @@
 
         const res = await fetch(url.toString(), { cache: "no-store" });
         const json = await res.json();
-
-        if (!json.ok) {
-          showErr(json.message || "Gagal memuat data trend.");
-          elLive.textContent = "Live: error";
-          return;
-        }
+        if (!json.ok) throw new Error(json.message || "Gagal load trend.");
 
         const labels = json.labels || [];
         const dailyTotal = json.dailyTotal || [];
         const series = json.series || [];
 
-        elSub.textContent = `Periode: ${json.days} hari • Group: ${json.group} • Update: ${new Date().toLocaleString()}`;
-        elLive.textContent = "Live: OK";
-
-        // BAR: daily total
-        if (barChart) barChart.destroy();
-        barChart = new Chart(document.getElementById("barDaily"), {
+        if (barDaily) barDaily.destroy();
+        barDaily = new Chart(document.getElementById("barDaily"), {
           type: "bar",
           data: {
             labels,
@@ -203,44 +649,74 @@
               {
                 label: "Total per hari",
                 data: dailyTotal,
+                backgroundColor: "#4cc9f0cc",
+                borderColor: "#4cc9f0",
+                borderWidth: 2,
               },
             ],
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            scales: {
-              x: { ticks: { maxRotation: 0, autoSkip: true } },
-              y: { beginAtZero: true },
-            },
+            scales: { y: { beginAtZero: true } },
           },
         });
 
-        // LINE: trend series
-        if (lineChart) lineChart.destroy();
-        lineChart = new Chart(document.getElementById("lineTrend"), {
+        if (lineTrend) lineTrend.destroy();
+        lineTrend = new Chart(document.getElementById("lineTrend"), {
           type: "line",
           data: {
             labels,
-            datasets: series.map((s) => ({
+            datasets: series.map((s, i) => ({
               label: s.name,
               data: s.data,
               tension: 0.25,
               pointRadius: 2,
+              borderWidth: 3,
+              borderColor: PALETTE[i % PALETTE.length],
+              backgroundColor: PALETTE[i % PALETTE.length] + "22",
             })),
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            scales: {
-              x: { ticks: { maxRotation: 0, autoSkip: true } },
-              y: { beginAtZero: true },
-            },
+            scales: { y: { beginAtZero: true } },
           },
         });
       }
 
-      btnRefresh.onclick = loadTrend;
+      async function loadAll() {
+        try {
+          showErr("");
+          elLive.textContent = "Live: loading...";
+          await loadStats();
+          await loadTrend();
+          elSub.textContent = `Tanggal: ${lastStats.date} • Trend: ${selDays.value} hari (${selGroup.value}) • Update: ${new Date().toLocaleString()}`;
+          elUpdated.textContent = new Date().toLocaleString();
+          elLive.textContent = "Live: OK";
+        } catch (err) {
+          showErr(String(err));
+          elLive.textContent = "Live: error";
+        }
+      }
+
+      // Sort keuskupan table
+      document.querySelectorAll("#tblKeus th.sort").forEach((th) => {
+        th.onclick = () => {
+          const k = th.getAttribute("data-k");
+          if (sortKeusKey === k) sortKeusDir *= -1;
+          else {
+            sortKeusKey = k;
+            sortKeusDir = -1;
+          }
+          if (lastStats) renderKeuskupanTable(lastStats.byKeuskupan || {});
+        };
+      });
+
+      keusFilter.onchange = renderParokiTable;
+      parokiSort.onchange = renderParokiTable;
+
+      btnRefresh.onclick = loadAll;
 
       btnAuto.onclick = () => {
         if (autoTimer) {
@@ -249,16 +725,17 @@
           btnAuto.textContent = "Auto: OFF";
           return;
         }
-        autoTimer = setInterval(loadTrend, 5000);
+        autoTimer = setInterval(loadAll, 5000);
         btnAuto.textContent = "Auto: ON (5s)";
-        loadTrend();
+        loadAll();
       };
 
-      selDays.onchange = loadTrend;
-      selGroup.onchange = loadTrend;
-      selTop.onchange = loadTrend;
+      selOffset.onchange = loadAll;
+      selDays.onchange = loadAll;
+      selGroup.onchange = loadAll;
+      selTop.onchange = loadAll;
 
-      loadTrend();
+      loadAll();
     </script>
   </body>
 </html>
